@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./facerec /home/patryk/opencv/data/haarcascades/haarcascade_frontalface_default.xml data.txt 0

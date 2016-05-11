@@ -38,6 +38,7 @@ static void read_csv(const string& filename, vector<Mat>& images, vector<int>& l
 }
 
 int main(int argc, const char *argv[]) {
+    cout << "Program started, checking parameters..." << endl;
     if (argc != 4) exit(1);
 
     string fn_haar = string(argv[1]);   // Haar detector path
@@ -47,6 +48,7 @@ int main(int argc, const char *argv[]) {
     vector<Mat> images;
     vector<int> labels;
 
+    cout << "Trying to read CSV file..." << endl;
     try {
         read_csv(fn_csv, images, labels);
     } catch (cv::Exception& e) {
@@ -58,11 +60,15 @@ int main(int argc, const char *argv[]) {
     int im_width = images[0].cols;
     int im_height = images[0].rows;
 
+    cout << "Creating LBPH Face Recognition Model..." << endl;
     // Face Recognition Model
-    Ptr<FaceRecognizer> model = createFisherFaceRecognizer(0, 123.0);
+    Ptr<FaceRecognizer> model = createLBPHFaceRecognizer(2, 16);
 	
+    cout << "Model Training Start..." << endl;
     // Train model with data
     model->train(images, labels);
+    //model->set("threshold", 90);
+    cout << "Model Training Finish..." << endl;
 
     // Haar Cascade Classifier used to detect faces in camera input
     CascadeClassifier haar_cascade;
@@ -71,6 +77,7 @@ int main(int argc, const char *argv[]) {
     // Handle to camera device
     VideoCapture cap(deviceId);
 
+    cout << "Trying to start camera..." << endl;
     if(!cap.isOpened()) {
         cerr << "Capture Device ID " << deviceId << " cannot be opened." << endl;
         return -1;
@@ -79,9 +86,10 @@ int main(int argc, const char *argv[]) {
     // Camera frame
     Mat frame;
 
+    cout << "Main Loop Starts.." << endl;
     while(true) {
-        cap >> frame;
-	
+        cap >> frame;	
+
         // Clone the current frame
         Mat original = frame.clone();
         Mat gray;
@@ -91,7 +99,7 @@ int main(int argc, const char *argv[]) {
 
         // Find the faces in the frame
         vector< Rect_<int> > faces;
-        haar_cascade.detectMultiScale(gray, faces, 2, 5);
+        haar_cascade.detectMultiScale(gray, faces, 1.5, 3, 0|CV_HAAR_SCALE_IMAGE, Size(30, 30));
  
         for(int i = 0; i < faces.size(); i++) {
             Rect face_i = faces[i];
@@ -136,5 +144,6 @@ int main(int argc, const char *argv[]) {
         char key = (char) waitKey(27);   // Exit on ESC
         if(key == 27) break;
     }
+
     return 0;
 }
